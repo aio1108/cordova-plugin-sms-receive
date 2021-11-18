@@ -135,11 +135,16 @@ public class SMSReceive extends CordovaPlugin {
 				if (intent.getAction().equals(SMS_RECEIVED_ACTION)) {
 					// Create SMS container
 					SmsMessage smsmsg = null;
+					String smsBody = "";
 					// Determine which API to use
 					if (Build.VERSION.SDK_INT >= 19) {
 						try {
-							SmsMessage[] sms = Telephony.Sms.Intents.getMessagesFromIntent(intent);
-							smsmsg = sms[0];
+							// SmsMessage[] sms = Telephony.Sms.Intents.getMessagesFromIntent(intent);
+							// smsmsg = sms[0];
+							for (SmsMessage smsMessage : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
+				                smsBody += smsMessage.getMessageBody();
+				                smsmsg = smsMessage; 
+				            }
 						} catch (Exception e) {
 							Log.d(LOG_TAG, e.getMessage());
 						}
@@ -154,7 +159,7 @@ public class SMSReceive extends CordovaPlugin {
 					}
 					// Get SMS contents as JSON
 					if(smsmsg != null) {
-						JSONObject jsms = SMSReceive.this.getJsonFromSmsMessage(smsmsg);
+						JSONObject jsms = SMSReceive.this.getJsonFromSmsMessage(smsmsg, smsBody);
 						SMSReceive.this.onSMSArrive(jsms);
 						Log.d(LOG_TAG, jsms.toString());
 					}else{
@@ -171,11 +176,11 @@ public class SMSReceive extends CordovaPlugin {
 		}
 	}
 
-	private JSONObject getJsonFromSmsMessage(SmsMessage sms) {
+	private JSONObject getJsonFromSmsMessage(SmsMessage sms,  String smsBody) {
 		JSONObject json = new JSONObject();
 		try {
 			json.put( "address", sms.getOriginatingAddress() );
-			json.put( "body", sms.getMessageBody() ); // May need sms.getMessageBody.toString()
+			json.put( "body", smsBody ); // May need sms.getMessageBody.toString()
 			json.put( "date_sent", sms.getTimestampMillis() );
 			json.put( "date", System.currentTimeMillis() );
 			json.put( "service_center", sms.getServiceCenterAddress());
