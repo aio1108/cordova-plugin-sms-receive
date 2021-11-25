@@ -8,4 +8,8 @@ smsExport.stopWatch = function(successCallback, failureCallback) {
 	cordova.exec( successCallback, failureCallback, 'SMSReceive', 'stopWatch', [] );
 };
 
+smsExport.listSMS = function(filter, successCallback, failureCallback) {
+	cordova.exec( successCallback, failureCallback, 'SMSReceive', 'listSMS', [ filter ] );
+};
+
 module.exports = smsExport;
