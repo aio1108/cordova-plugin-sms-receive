@@ -36,6 +36,13 @@ public class SMSReceive extends CordovaPlugin {
 	public static final int START_WATCH_REQ_CODE = 0;
 	public static final int PERMISSION_DENIED_ERROR = 20;
 
+	public static final String SMS_URI_ALL = "content://sms/";
+
+	public static final String BOX = "box";
+	public static final String ADDRESS = "address";
+	public static final String BODY = "body";
+	public static final String READ = "read";
+
 	private BroadcastReceiver mReceiver = null;
 
 	private JSONArray requestArgs;
@@ -99,7 +106,7 @@ public class SMSReceive extends CordovaPlugin {
 	}
 
 	private PluginResult listSMS(JSONObject filter, CallbackContext callbackContext) {
-		Log.i(LOGTAG, ACTION_LIST_SMS);
+		Log.i(LOG_TAG, ACTION_LIST_SMS);
 		String uri_filter = filter.has(BOX) ? filter.optString(BOX) : "inbox";
 		int fread = filter.has(READ) ? filter.optInt(READ) : -1;
 		int fid = filter.has("_id") ? filter.optInt("_id") : -1;
