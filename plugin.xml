@@ -30,6 +30,7 @@
 		<config-file target="AndroidManifest.xml" parent="/*">
 			<uses-feature android:name="android.hardware.telephony" android:required="false" />
 			<uses-permission android:name="android.permission.RECEIVE_SMS" />
+			<uses-permission android:name="android.permission.READ_SMS" />
 		</config-file>
 
 		<source-file src="src/android/SMSReceive.java" target-dir="src/com/andreszs/cordova/sms" />

@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.telephony.SmsMessage;
+import android.telephony.PhoneNumberUtils;
 import android.provider.Telephony;
 import android.util.Log;
 
@@ -58,7 +59,7 @@ public class SMSReceive extends CordovaPlugin {
 			} else {
 				result = this.startWatch(callbackContext);
 			}
-		} else if (ACTION_LIST_SMS.equals(action)) {
+		} else if (action.equals(ACTION_LIST_SMS)) {
 			JSONObject filters = inputs.optJSONObject(0);
 			result = this.listSMS(filters, callbackContext);
 		} else if (action.equals(ACTION_STOP_WATCH)) {
@@ -161,21 +162,21 @@ public class SMSReceive extends CordovaPlugin {
 		try {
 			for (int j = 0; j < nCol; j++) {
 				switch (cur.getType(j)) {
-				case Cursor.FIELD_TYPE_NULL:
-					json.put(keys[j], JSONObject.NULL);
-					break;
-				case Cursor.FIELD_TYPE_INTEGER:
-					json.put(keys[j], cur.getLong(j));
-					break;
-				case Cursor.FIELD_TYPE_FLOAT:
-					json.put(keys[j], cur.getFloat(j));
-					break;
-				case Cursor.FIELD_TYPE_STRING:
-					json.put(keys[j], cur.getString(j));
-					break;
-				case Cursor.FIELD_TYPE_BLOB:
-					json.put(keys[j], cur.getBlob(j));
-					break;
+					case Cursor.FIELD_TYPE_NULL:
+						json.put(keys[j], JSONObject.NULL);
+						break;
+					case Cursor.FIELD_TYPE_INTEGER:
+						json.put(keys[j], cur.getLong(j));
+						break;
+					case Cursor.FIELD_TYPE_FLOAT:
+						json.put(keys[j], cur.getFloat(j));
+						break;
+					case Cursor.FIELD_TYPE_STRING:
+						json.put(keys[j], cur.getString(j));
+						break;
+					case Cursor.FIELD_TYPE_BLOB:
+						json.put(keys[j], cur.getBlob(j));
+						break;
 				}
 			}
 		} catch (Exception e) {
@@ -264,6 +265,11 @@ public class SMSReceive extends CordovaPlugin {
 			return false;
 		}
 
+		if (cordova.getActivity()
+				.checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_DENIED) {
+			return false;
+		}
+
 		return true;
 
 	}
@@ -276,9 +282,8 @@ public class SMSReceive extends CordovaPlugin {
 	 * @param requestCode The code to get request action
 	 */
 	public void requestPermissions(int requestCode) {
-
-		cordova.requestPermission(this, requestCode, Manifest.permission.RECEIVE_SMS);
-
+		String[] permissions = {Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS};
+		cordova.requestPermissions(this, requestCode, permissions);
 	}
 
 	/**
@@ -300,9 +305,9 @@ public class SMSReceive extends CordovaPlugin {
 			}
 		}
 		switch (requestCode) {
-		case START_WATCH_REQ_CODE:
-			this.startWatch(this.callbackContext);
-			break;
+			case START_WATCH_REQ_CODE:
+				this.startWatch(this.callbackContext);
+				break;
 		}
 	}
 
