@@ -18,6 +18,7 @@ import android.provider.Telephony;
 import android.util.Log;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 
 import java.security.MessageDigest;
 
@@ -156,9 +157,7 @@ public class SMSReceive extends CordovaPlugin {
 				return null;
 			}
 			try {
-				SubscriptionManager manager = SubscriptionManager.from(ctx);
-				SubscriptionInfo subnfo = manager.getActiveSubscriptionInfo(json.getInt("sub_id"));//this requires READ_PHONE_STATE permission
-				json.put("sim_num", subnfo.getNumber());
+				json.put("sim_num", getSimNumber(ctx, json.optInt("sub_id")));
 			} catch (Exception e) {
 				Log.d(LOG_TAG, e.getMessage());
 			}
@@ -204,18 +203,20 @@ public class SMSReceive extends CordovaPlugin {
 				+ "});}catch(e){console.log('exception firing onSMSArrive event from native');};");
 	}
 
-	private String getSimNumber(Context context, Bundle bundle) {
-		String sim_num = "";
+	private String getSimNumber(Context context, int slot) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-			int sub = bundle.getInt("subscription", -1);
-			SubscriptionManager manager = SubscriptionManager.from(context);
-			SubscriptionInfo subnfo = manager.getActiveSubscriptionInfo(sub);//this requires READ_PHONE_STATE permission
-			sim_num = subnfo.getNumber();
+			SubscriptionManager sManager = (SubscriptionManager) SubscriptionManager.from(context);
+			SubscriptionInfo infoSim = sManager.getActiveSubscriptionInfo(slot);
+			if (infoSim != null) {
+				return infoSim.getNumber();
+			}
+		} else {
+			TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+			if (manager != null) {
+				return manager.getLine1Number();
+			}
 		}
-		else{
-			sim_num = String.valueOf(bundle.getInt("simnum", -1));
-		}
-		return sim_num;
+		return "";
 	}
 
 	protected void createIncomingSMSReceiver() {
@@ -248,7 +249,7 @@ public class SMSReceive extends CordovaPlugin {
 					if (smsmsg != null) {
 						JSONObject jsms = SMSReceive.this.getJsonFromSmsMessage(smsmsg, smsBody);
 						try {
-							jsms.put("sim_num", getSimNumber(context, bundle));
+							jsms.put("sim_num", getSimNumber(context, bundle.getInt("subscription", -1)));
 						} catch (Exception e) {
 							Log.d(LOG_TAG, e.getMessage());
 						}
@@ -318,7 +319,8 @@ public class SMSReceive extends CordovaPlugin {
 	 * @param requestCode The code to get request action
 	 */
 	public void requestPermissions(int requestCode) {
-		String[] permissions = {Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_PHONE_STATE};
+		String[] permissions = { Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS,
+				Manifest.permission.READ_PHONE_STATE };
 		cordova.requestPermissions(this, requestCode, permissions);
 	}
 
